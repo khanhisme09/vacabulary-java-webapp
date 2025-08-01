@@ -1,4 +1,4 @@
-package com.vocabulary.dto;
+package com.vocabulary.model;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 

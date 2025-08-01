@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <th:block th:replace="fragments :: head"></th:block>
+    <th:block th:replace="~{fragments :: head}"></th:block>
     <title>Home - Vocabulary App</title>
 </head>
 <body>
-<th:block th:replace="fragments :: header"></th:block>
+<th:block th:replace="~{fragments :: header}"></th:block>
 
 <main class="container my-5">
     <div class="p-5 mb-4 bg-light rounded-3">
@@ -37,6 +37,6 @@
     </div>
 </main>
 
-<th:block th:replace="fragments :: scripts"></th:block>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
 </body>
 </html>

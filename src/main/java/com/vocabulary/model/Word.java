@@ -34,8 +34,7 @@ public class Word {
     @Enumerated(EnumType.STRING)
     private DictionarySource source = DictionarySource.USER;
 
-    // Thêm enum mới
     public enum DictionarySource {
-        USER, OXFORD, CAMBRIDGE, MERRIAM
+        USER, OXFORD, CAMBRIDGE, API, MERRIAM
     }
 }

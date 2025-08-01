@@ -1,59 +1,81 @@
 package com.vocabulary.controller;
-import com.vocabulary.dto.SearchTerm;
-import com.vocabulary.exception.DictionaryServiceException;
-import com.vocabulary.exception.WordNotFoundException;
+
 import com.vocabulary.model.Word;
 import com.vocabulary.service.DictionaryService;
+import com.vocabulary.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import java.security.Principal;
 
-// DictionaryController.java
 @Controller
 @RequestMapping("/dictionary")
 public class DictionaryController {
 
     private final DictionaryService dictionaryService;
+    private final UserService userService;
 
     @Autowired
-    public DictionaryController(DictionaryService dictionaryService) {
+    public DictionaryController(DictionaryService dictionaryService, UserService userService) {
         this.dictionaryService = dictionaryService;
+        this.userService = userService;
     }
 
     @GetMapping
-    public String dictionaryPage(Model model) {
-        model.addAttribute("searchTerm", new SearchTerm());
-        model.addAttribute("recentSearches", dictionaryService.getRecentSearches());
+    public String dictionaryPage(
+            @RequestParam(name = "term", required = false) String term,
+            Model model,
+            Principal principal
+    ) {
+        if (term != null && !term.isEmpty()) {
+            try {
+                Word word = dictionaryService.lookupWord(term);
+                model.addAttribute("word", word);
+
+                if (principal != null) {
+                    boolean isSaved = userService.getSavedWords(principal.getName())
+                            .stream()
+                            .anyMatch(w -> w.getId().equals(word.getId()));
+                    model.addAttribute("isSaved", isSaved);
+                }
+            } catch (RuntimeException e) {
+                model.addAttribute("error", e.getMessage());
+            }
+        }
+
+        model.addAttribute("searchTerm", term == null ? "" : term);
         return "dictionary";
     }
 
     @PostMapping("/search")
     public String searchWord(
-            @ModelAttribute SearchTerm searchTerm,
+            @RequestParam String term,
             Model model,
-            HttpSession session
+            Principal principal
     ) {
         try {
-            Word word = dictionaryService.lookupWord(searchTerm.getTerm());
+            Word word = dictionaryService.lookupWord(term);
             model.addAttribute("word", word);
 
-            // Lưu từ tìm kiếm gần đây
-            dictionaryService.addToRecentSearches(searchTerm.getTerm(), session);
+            // Kiểm tra xem người dùng đã lưu từ này chưa
+            if (principal != null) {
+                boolean isSaved = userService.getSavedWords(principal.getName())
+                        .stream()
+                        .anyMatch(w -> w.getId().equals(word.getId()));
+                model.addAttribute("isSaved", isSaved);
+            }
 
-        } catch (WordNotFoundException e) {
+        } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
-        } catch (DictionaryServiceException e) {
-            model.addAttribute("error", "Service temporarily unavailable. Please try again later.");
         }
 
-        model.addAttribute("searchTerm", searchTerm);
-        model.addAttribute("recentSearches", dictionaryService.getRecentSearches());
+        model.addAttribute("searchTerm", term);
         return "dictionary";
     }
 }

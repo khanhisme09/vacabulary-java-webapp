@@ -5,7 +5,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Entity
@@ -23,11 +25,18 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_vocabulary",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "word_id")
     )
     private Set<Word> savedWords = new HashSet<>();
+
+    // Thêm trường để theo dõi tiến độ học
+    @ElementCollection
+    @MapKeyColumn(name = "word_id")
+    @Column(name = "mastery_level")
+    @CollectionTable(name = "user_word_progress", joinColumns = @JoinColumn(name = "user_id"))
+    private Map<Long, Integer> wordProgress = new HashMap<>();
 }

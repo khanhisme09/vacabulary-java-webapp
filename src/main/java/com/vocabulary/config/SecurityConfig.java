@@ -16,21 +16,28 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/home", "/css/**", "/js/**").permitAll()
+                        // Cho phép truy cập không cần đăng nhập với các trang sau:
+                        .requestMatchers("/", "/home", "/login", "/user/register", "/register","/dictionary","/dictionary/search", "/css/**", "/js/**", "/images/**").permitAll()
+
+                        // Những URL còn lại cần đăng nhập
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/dashboard")
+                        .loginProcessingUrl("/login")
+                        .defaultSuccessUrl("/", true)
                         .permitAll()
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
-                );
+                )
+                .csrf(csrf -> csrf.disable());
+
         return http.build();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {

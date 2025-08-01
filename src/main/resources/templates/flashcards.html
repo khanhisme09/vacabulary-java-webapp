@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments :: head}"></th:block>
+    <title>Flashcards - Vocabulary App</title>
+    <style>
+        .flashcard-container {
+            perspective: 1000px;
+            height: 300px;
+            margin-bottom: 2rem;
+        }
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .flashcard-front {
+            background-color: #f8f9fa;
+        }
+        .flashcard-back {
+            background-color: #e9ecef;
+            transform: rotateY(180deg);
+        }
+        .mastery-buttons .btn {
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+<th:block th:replace="~{fragments :: header}"></th:block>
+
+<main class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="text-center mb-4">Flashcards</h1>
+
+            <div class="flashcard-container">
+                <div class="flashcard" id="flashcard">
+                    <div class="flashcard-face flashcard-front">
+                        <h2 id="term-display" class="text-center"></h2>
+                        <p id="phonetic-display" class="text-muted text-center"></p>
+                    </div>
+                    <div class="flashcard-face flashcard-back">
+                        <p id="definition-display" class="text-center"></p>
+                        <p id="example-display" class="fst-italic text-center mt-3"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mb-4">
+                <button id="flip-btn" class="btn btn-secondary">
+                    Show Definition
+                </button>
+            </div>
+
+            <div class="mastery-buttons text-center mb-4 d-none" id="mastery-buttons">
+                <p>How well do you know this word?</p>
+                <button class="btn btn-outline-danger mastery-btn" data-mastery="1">Not at all</button>
+                <button class="btn btn-outline-warning mastery-btn" data-mastery="3">Somewhat</button>
+                <button class="btn btn-outline-success mastery-btn" data-mastery="5">Very well</button>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <button id="prev-btn" class="btn btn-secondary">
+                    Previous
+                </button>
+                <span id="progress-counter">1/0</span>
+                <button id="next-btn" class="btn btn-primary">
+                    Next
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    document.addEventListener('DOMContentLoaded', function() {
+        // Danh sách từ
+        const words = [
+            /*[# th:each="word : ${words}"]*/
+            {
+                id: [[${word.id}]],
+                term: "[[${word.term}]]",
+                phonetic: "[[${word.phonetic}]]",
+                definition: "[[${word.definition}]]",
+                example: "[[${word.example}]]"
+            }/*[# th:if="${not #lists.isLast(word, words)}"]*/,/*[/]*/
+            /*[/]*/
+        ];
+
+        let currentIndex = 0;
+        const flashcard = document.getElementById('flashcard');
+        const flipBtn = document.getElementById('flip-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const progressCounter = document.getElementById('progress-counter');
+        const masteryButtons = document.getElementById('mastery-buttons');
+
+        // Hiển thị từ hiện tại
+        function showCurrentWord() {
+            const word = words[currentIndex];
+            document.getElementById('term-display').textContent = word.term;
+            document.getElementById('phonetic-display').textContent = word.phonetic || '';
+            document.getElementById('definition-display').textContent = word.definition;
+            document.getElementById('example-display').textContent = word.example || '';
+
+            progressCounter.textContent = `${currentIndex + 1}/${words.length}`;
+
+            // Reset flashcard về mặt trước
+            flashcard.classList.remove('flipped');
+            flipBtn.textContent = 'Show Definition';
+            masteryButtons.classList.add('d-none');
+        }
+
+        // Lật thẻ
+        flipBtn.addEventListener('click', function() {
+            flashcard.classList.toggle('flipped');
+
+            if (flashcard.classList.contains('flipped')) {
+                flipBtn.textContent = 'Show Term';
+                masteryButtons.classList.remove('d-none');
+            } else {
+                flipBtn.textContent = 'Show Definition';
+                masteryButtons.classList.add('d-none');
+            }
+        });
+
+        // Nút mastery
+        document.querySelectorAll('.mastery-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const mastery = parseInt(this.dataset.mastery);
+                const wordId = words[currentIndex].id;
+
+                // Gửi cập nhật lên server
+                fetch('/learn/update-progress?wordId=' + wordId + '&progress=' + mastery, {
+                    method: 'POST'
+                });
+
+                // Chuyển đến từ tiếp theo
+                if (currentIndex < words.length - 1) {
+                    currentIndex++;
+                    showCurrentWord();
+                } else {
+                    alert('You have completed all flashcards!');
+                }
+            });
+        });
+
+        // Nút previous
+        prevBtn.addEventListener('click', function() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                showCurrentWord();
+            }
+        });
+
+        // Nút next
+        nextBtn.addEventListener('click', function() {
+            if (currentIndex < words.length - 1) {
+                currentIndex++;
+                showCurrentWord();
+            }
+        });
+
+        // Khởi tạo
+        if (words.length > 0) {
+            showCurrentWord();
+        } else {
+            progressCounter.textContent = '0/0';
+        }
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

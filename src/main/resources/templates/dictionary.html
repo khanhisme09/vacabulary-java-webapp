@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{fragments :: head}"></th:block>
+<body>
+
+<th:block th:replace="~{fragments :: header}"></th:block>
+
+<div class="container mt-5">
+    <h1>Dictionary</h1>
+
+    <form method="post" action="/dictionary/search">
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" name="term" placeholder="Enter a word" th:value="${searchTerm}">
+            <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+    </form>
+
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div th:if="${word}" class="card mt-4">
+        <div class="card-header">
+            <h2 th:text="${word.term}"></h2>
+            <p th:text="${word.phonetic}"></p>
+        </div>
+        <div class="card-body">
+            <h5>Definition:</h5>
+            <p th:text="${word.definition}"></p>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <button class="btn btn-outline-secondary" onclick="pronounceWord()">
+                <i class="bi bi-volume-up"></i> Pronounce
+            </button>
+
+            <!-- Nếu người dùng đã đăng nhập -->
+            <div th:if="${#authentication != null}">
+                <form th:if="${isSaved == null or !isSaved}" th:action="@{/user/save-word}" method="post">
+                    <input type="hidden" name="wordId" th:value="${word.id}">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-bookmark-plus"></i> Save to My Words
+                    </button>
+                </form>
+
+                <div th:if="${isSaved}" class="d-flex align-items-center">
+                    <span class="text-success me-2">
+                        <i class="bi bi-check-circle"></i> Saved
+                    </span>
+                    <a th:href="@{/user/my-words}" class="btn btn-outline-primary">View My Words</a>
+                </div>
+            </div>
+
+            <!-- Nếu người dùng chưa đăng nhập -->
+            <div th:if="${#authentication == null}">
+                <button type="button" class="btn btn-outline-info" onclick="promptLogin()">
+                    <i class="bi bi-bookmark-plus"></i> Save to My Words
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script fragment -->
+<script>
+    function promptLogin() {
+        if (confirm("Bạn cần đăng nhập để lưu từ này. Chuyển đến trang đăng nhập?")) {
+            window.location.href = "/login";
+        }
+    }
+
+    function pronounceWord() {
+        const text = document.querySelector('h2')?.innerText;
+        if (text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            speechSynthesis.speak(utterance);
+        }
+    }
+</script>
+</body>
+</html>

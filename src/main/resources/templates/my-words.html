@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>My Words - Vocabulary App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .word-card {
+            transition: transform 0.2s;
+            margin-bottom: 20px;
+            height: 100%;
+            border: 1px solid rgba(0,0,0,0.125);
+            border-radius: 0.5rem;
+        }
+        .word-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid rgba(0,0,0,0.125);
+        }
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .card-text {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+        .card-footer {
+            background: white;
+            border-top: 1px solid rgba(0,0,0,0.125);
+        }
+        .empty-state {
+            background-color: #f8f9fa;
+            border-radius: 1rem;
+            padding: 3rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<!-- Sửa đường dẫn fragment: thêm dấu '/' ở đầu -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Saved Words</h1>
+        <a href="/dictionary" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add More Words
+        </a>
+    </div>
+
+    <div th:if="${words == null or words.isEmpty()}">
+        <div class="empty-state">
+            <div class="mb-4">
+                <i class="bi bi-journal-x" style="font-size: 4rem; color: #6c757d;"></i>
+            </div>
+            <h3 class="mb-3">Your word list is empty</h3>
+            <p class="text-muted mb-4">
+                Start building your vocabulary by saving words from the dictionary.
+                Words you save will appear here for practice and review.
+            </p>
+            <a href="/dictionary" class="btn btn-primary btn-lg">
+                <i class="bi bi-search me-2"></i>Go to Dictionary
+            </a>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" th:if="${words != null and !words.isEmpty()}">
+        <div class="col" th:each="word : ${words}">
+            <div class="card word-card h-100">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0" th:text="${word.term}"></h5>
+                        <span class="badge bg-secondary"
+                              th:if="${word.phonetic != null and !word.phonetic.isEmpty()}"
+                              th:text="${word.phonetic}"></span>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <p class="card-text" th:text="${word.definition}"></p>
+
+                    <div th:if="${word.example != null and !word.example.isEmpty()}" class="mt-auto">
+                        <p class="fst-italic text-muted mb-0">
+                            <span class="fw-medium">Example:</span>
+                            <span th:text="${word.example}"></span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <form th:action="@{/user/remove-word}" method="post">
+                            <input type="hidden" name="wordId" th:value="${word.id}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash"></i> Remove
+                            </button>
+                        </form>
+
+                        <div>
+                            <a th:href="@{/learn/flashcards(wordId=${word.id})}"
+                               class="btn btn-outline-primary btn-sm me-2">
+                                <i class="bi bi-card-heading"></i> Practice
+                            </a>
+
+                            <a th:href="@{/dictionary?term=${word.term}}"
+                               class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-search"></i> Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

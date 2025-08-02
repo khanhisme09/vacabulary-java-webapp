@@ -1,0 +1,12 @@
+<!-- src/main/resources/templates/quiz-error.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Quiz Error</title>
+</head>
+<body>
+<h1>Đã xảy ra lỗi khi xử lý quiz</h1>
+<p th:text="${errorMessage}">Lỗi không xác định</p>
+<a th:href="@{/}">Quay lại trang chủ</a>
+</body>
+</html>

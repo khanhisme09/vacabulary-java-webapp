@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -88,5 +89,17 @@ public class UserService {
             user.getWordProgress().put(wordId, progress);
             userRepository.save(user);
         }
+    }
+
+    public Integer getWordProgress(String email, Long wordId) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return user.getWordProgress().get(wordId);
+    }
+
+    public Map<Long, Integer> getAllWordProgress(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return user.getWordProgress();
     }
 }

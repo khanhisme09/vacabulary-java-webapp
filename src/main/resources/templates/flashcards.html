@@ -1,25 +1,38 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <th:block th:replace="~{fragments :: head}"></th:block>
     <title>Flashcards - Vocabulary App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
+        :root {
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+
         .flashcard-container {
             perspective: 1000px;
-            height: 300px;
+            height: 400px;
             margin-bottom: 2rem;
         }
+
         .flashcard {
             width: 100%;
             height: 100%;
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 0.6s;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
             cursor: pointer;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
+
         .flashcard.flipped {
             transform: rotateY(180deg);
         }
+
         .flashcard-face {
             position: absolute;
             width: 100%;
@@ -30,65 +43,111 @@
             justify-content: center;
             align-items: center;
             padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 16px;
         }
+
         .flashcard-front {
-            background-color: #f8f9fa;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--primary-color);
         }
+
         .flashcard-back {
-            background-color: #e9ecef;
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            color: #333;
             transform: rotateY(180deg);
         }
+
         .mastery-buttons .btn {
             margin: 0 5px;
+            min-width: 120px;
+        }
+
+        .progress-container {
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
-<th:block th:replace="~{fragments :: header}"></th:block>
+<div th:replace="~{fragments/header :: header}"></div>
 
 <main class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <h1 class="text-center mb-4">Flashcards</h1>
+    <div class="text-center mb-4">
+        <h1>Flashcards Learning</h1>
+        <p class="lead">Flip the card to see the definition and examples</p>
+    </div>
 
-            <div class="flashcard-container">
-                <div class="flashcard" id="flashcard">
-                    <div class="flashcard-face flashcard-front">
-                        <h2 id="term-display" class="text-center"></h2>
-                        <p id="phonetic-display" class="text-muted text-center"></p>
-                    </div>
-                    <div class="flashcard-face flashcard-back">
-                        <p id="definition-display" class="text-center"></p>
-                        <p id="example-display" class="fst-italic text-center mt-3"></p>
-                    </div>
+    <!-- Progress bar -->
+    <div class="progress-container">
+        <div class="progress-label">
+            <span>Your Progress</span>
+            <span id="progress-percent">0%</span>
+        </div>
+        <div class="progress" style="height: 20px;">
+            <div id="overall-progress" class="progress-bar"
+                 role="progressbar" style="width: 0"></div>
+        </div>
+    </div>
+
+    <!-- Flashcard -->
+    <div class="flashcard-container">
+        <div class="flashcard" id="flashcard">
+            <div class="flashcard-face flashcard-front">
+                <h2 id="term-display" class="display-4 text-center fw-bold"></h2>
+                <p id="phonetic-display" class="fs-5 text-muted text-center mt-2"></p>
+                <div class="mt-4">
+                    <button id="flip-btn" class="btn btn-lg btn-outline-primary">
+                        <i class="bi bi-arrow-repeat me-2"></i>Show Definition
+                    </button>
                 </div>
             </div>
 
-            <div class="text-center mb-4">
-                <button id="flip-btn" class="btn btn-secondary">
-                    Show Definition
-                </button>
-            </div>
+            <div class="flashcard-face flashcard-back">
+                <div class="w-100">
+                    <h3 class="mb-3">Definition</h3>
+                    <p id="definition-display" class="fs-5 text-center"></p>
 
-            <div class="mastery-buttons text-center mb-4 d-none" id="mastery-buttons">
-                <p>How well do you know this word?</p>
-                <button class="btn btn-outline-danger mastery-btn" data-mastery="1">Not at all</button>
-                <button class="btn btn-outline-warning mastery-btn" data-mastery="3">Somewhat</button>
-                <button class="btn btn-outline-success mastery-btn" data-mastery="5">Very well</button>
-            </div>
+                    <div th:if="${word.example}" class="mt-4">
+                        <h4>Example</h4>
+                        <p id="example-display" class="fst-italic fs-5 text-center text-muted"></p>
+                    </div>
+                </div>
 
-            <div class="d-flex justify-content-between">
-                <button id="prev-btn" class="btn btn-secondary">
-                    Previous
-                </button>
-                <span id="progress-counter">1/0</span>
-                <button id="next-btn" class="btn btn-primary">
-                    Next
-                </button>
+                <div class="mt-auto w-100">
+                    <div class="mastery-buttons">
+                        <p class="fw-medium mb-3">How well do you know this word?</p>
+                        <div class="d-flex justify-content-center flex-wrap">
+                            <button class="btn btn-outline-danger mastery-btn" data-mastery="0">
+                                <i class="bi bi-emoji-dizzy me-1"></i> Still Learning
+                            </button>
+                            <button class="btn btn-outline-warning mastery-btn" data-mastery="50">
+                                <i class="bi bi-emoji-neutral me-1"></i> Getting There
+                            </button>
+                            <button class="btn btn-outline-success mastery-btn" data-mastery="100">
+                                <i class="bi bi-emoji-smile me-1"></i> Mastered
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="d-flex justify-content-between mt-4">
+        <a th:href="@{/user/my-words}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to My Words
+        </a>
+        <button id="next-btn" class="btn btn-primary">
+            Next Word <i class="bi bi-arrow-right ms-1"></i>
+        </button>
     </div>
 </main>
 
@@ -97,101 +156,95 @@
 <script th:inline="javascript">
     /*<![CDATA[*/
     document.addEventListener('DOMContentLoaded', function() {
-        // Danh sách từ
-        const words = [
-            /*[# th:each="word : ${words}"]*/
-            {
-                id: [[${word.id}]],
-                term: "[[${word.term}]]",
-                phonetic: "[[${word.phonetic}]]",
-                definition: "[[${word.definition}]]",
-                example: "[[${word.example}]]"
-            }/*[# th:if="${not #lists.isLast(word, words)}"]*/,/*[/]*/
-            /*[/]*/
-        ];
-
-        let currentIndex = 0;
         const flashcard = document.getElementById('flashcard');
         const flipBtn = document.getElementById('flip-btn');
-        const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
-        const progressCounter = document.getElementById('progress-counter');
-        const masteryButtons = document.getElementById('mastery-buttons');
 
-        // Hiển thị từ hiện tại
-        function showCurrentWord() {
-            const word = words[currentIndex];
-            document.getElementById('term-display').textContent = word.term;
-            document.getElementById('phonetic-display').textContent = word.phonetic || '';
-            document.getElementById('definition-display').textContent = word.definition;
-            document.getElementById('example-display').textContent = word.example || '';
+        // Dữ liệu từ
+        const word = {
+            id: [[${word.id}]],
+            term: "[[${word.term}]]",
+            phonetic: "[[${word.phonetic}]]",
+            definition: "[[${word.definition}]]",
+            example: "[[${word.example}]]"
+        };
 
-            progressCounter.textContent = `${currentIndex + 1}/${words.length}`;
+        // Tiến độ học tập
+        const progressStats = /*[[${progress}]]*/ {};
 
-            // Reset flashcard về mặt trước
-            flashcard.classList.remove('flipped');
-            flipBtn.textContent = 'Show Definition';
-            masteryButtons.classList.add('d-none');
+        // Trạng thái mastered
+        let wordMastered = false;
+
+        // Hiển thị từ
+        document.getElementById('term-display').textContent = word.term;
+        document.getElementById('phonetic-display').textContent = word.phonetic || '';
+        document.getElementById('definition-display').textContent = word.definition;
+        document.getElementById('example-display').textContent = word.example || '';
+
+        // Tính toán và hiển thị tiến độ tổng thể
+        function updateOverallProgress() {
+            let total = 0;
+            let completed = 0;
+
+            for (const wordId in progressStats) {
+                total += 100;
+                completed += progressStats[wordId] || 0;
+            }
+
+            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+            document.getElementById('overall-progress').style.width = percent + '%';
+            document.getElementById('progress-percent').textContent = percent + '%';
         }
 
-        // Lật thẻ
-        flipBtn.addEventListener('click', function() {
-            flashcard.classList.toggle('flipped');
+        updateOverallProgress();
 
-            if (flashcard.classList.contains('flipped')) {
-                flipBtn.textContent = 'Show Term';
-                masteryButtons.classList.remove('d-none');
-            } else {
-                flipBtn.textContent = 'Show Definition';
-                masteryButtons.classList.add('d-none');
-            }
+        // Lật thẻ
+        flipBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            flashcard.classList.toggle('flipped');
+            flipBtn.textContent = flashcard.classList.contains('flipped')
+                ? 'Show Term'
+                : 'Show Definition';
         });
 
-        // Nút mastery
+        // Đánh giá mức độ thành thạo
         document.querySelectorAll('.mastery-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const mastery = parseInt(this.dataset.mastery);
-                const wordId = words[currentIndex].id;
+                wordMastered = (mastery === 100); // Gán true nếu mastered
 
                 // Gửi cập nhật lên server
-                fetch('/learn/update-progress?wordId=' + wordId + '&progress=' + mastery, {
+                fetch('/learn/update-progress?wordId=' + word.id + '&progress=' + mastery, {
                     method: 'POST'
-                });
+                }).then(response => {
+                    if (response.ok) {
+                        // Cập nhật progressStats cục bộ
+                        progressStats[word.id] = mastery;
+                        updateOverallProgress();
 
-                // Chuyển đến từ tiếp theo
-                if (currentIndex < words.length - 1) {
-                    currentIndex++;
-                    showCurrentWord();
-                } else {
-                    alert('You have completed all flashcards!');
-                }
+                        // Hiển thị feedback
+                        const feedback = document.createElement('div');
+                        feedback.className = 'alert alert-success position-fixed top-0 start-50 translate-middle-x mt-3';
+                        feedback.style.zIndex = '1000';
+                        feedback.textContent = 'Progress updated!';
+                        document.body.appendChild(feedback);
+
+                        setTimeout(() => {
+                            feedback.remove();
+                        }, 2000);
+                    }
+                });
             });
         });
 
-        // Nút previous
-        prevBtn.addEventListener('click', function() {
-            if (currentIndex > 0) {
-                currentIndex--;
-                showCurrentWord();
-            }
+        // Nút Next
+        nextBtn.addEventListener('click', function () {
+            window.location.href = '/learn/next-flashcard?currentWordId=' + word.id + (wordMastered ? '&mastered=true' : '');
         });
 
-        // Nút next
-        nextBtn.addEventListener('click', function() {
-            if (currentIndex < words.length - 1) {
-                currentIndex++;
-                showCurrentWord();
-            }
-        });
-
-        // Khởi tạo
-        if (words.length > 0) {
-            showCurrentWord();
-        } else {
-            progressCounter.textContent = '0/0';
-        }
     });
     /*]]>*/
 </script>
+
 </body>
 </html>

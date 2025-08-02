@@ -17,7 +17,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         // Cho phép truy cập không cần đăng nhập với các trang sau:
-                        .requestMatchers("/", "/home", "/login", "/user/register", "/register","/dictionary","/dictionary/search", "/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/test-login","/", "/home", "/login", "/user/register", "/register","/dictionary","/dictionary/search", "/css/**", "/js/**", "/images/**").permitAll()
 
                         // Những URL còn lại cần đăng nhập
                         .anyRequest().authenticated()

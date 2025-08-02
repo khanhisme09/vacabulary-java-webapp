@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Learning Hub - Vocabulary App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .hub-section {
+            background-color: #f8f9fa;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .option-card {
+            transition: all 0.3s;
+            height: 100%;
+            border: none;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .option-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+        .option-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .progress-ring {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1rem;
+        }
+        .progress-ring-circle {
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 0.5s;
+        }
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="container my-5">
+    <div class="text-center mb-5">
+        <h1>Learning Hub</h1>
+        <p class="lead">Choose how you want to practice your vocabulary</p>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="hub-section">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2>Your Learning Progress</h2>
+                <p class="text-muted">
+                    Track your mastery of the words you've saved.
+                    Practice regularly to improve your vocabulary!
+                </p>
+                <a th:href="@{/user/my-words}" class="btn btn-outline-primary">
+                    View My Words
+                </a>
+            </div>
+            <div class="col-md-6 text-center">
+                <div class="progress-ring">
+                    <svg width="120" height="120">
+                        <circle class="progress-ring-bg" cx="60" cy="60" r="50"
+                                fill="none" stroke="#e9ecef" stroke-width="8" />
+                        <circle class="progress-ring-circle" cx="60" cy="60" r="50"
+                                fill="none" stroke="#0d6efd" stroke-width="8"
+                                th:attr="stroke-dasharray=${310}, stroke-dashoffset=${310 - (310 * overallProgress / 100)}" />
+                    </svg>
+                    <div class="progress-text" th:text="${overallProgress} + '%'"></div>
+                </div>
+                <p class="fw-medium">Overall Mastery</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Practice Options -->
+    <div class="hub-section">
+        <h2 class="mb-4">Practice Options</h2>
+        <div class="row g-4">
+            <!-- Flashcards -->
+            <div class="col-md-6">
+                <div class="card option-card">
+                    <div class="card-body text-center p-4">
+                        <div class="option-icon text-primary">
+                            <i class="bi bi-card-heading"></i>
+                        </div>
+                        <h3 class="card-title">Flashcards</h3>
+                        <p class="card-text">
+                            Flip through interactive flashcards to memorize vocabulary definitions
+                            and examples.
+                        </p>
+                        <a href="/learn/flashcards" class="btn btn-primary mt-3">
+                            Start Practice
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz -->
+            <div class="col-md-6">
+                <div class="card option-card">
+                    <div class="card-body text-center p-4">
+                        <div class="option-icon text-success">
+                            <i class="bi bi-patch-question"></i>
+                        </div>
+                        <h3 class="card-title">Quiz Challenge</h3>
+                        <p class="card-text">
+                            Test your knowledge with multiple-choice questions based
+                            on your saved words.
+                        </p>
+                        <a href="/quiz" class="btn btn-success mt-3">
+                            Take Quiz
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Word Recommendations -->
+    <div class="hub-section" th:if="${!recommendedWords.isEmpty()}">
+        <h2 class="mb-4">Words to Review</h2>
+        <p class="text-muted mb-4">
+            These words have low mastery scores. Focus on them to improve your vocabulary.
+        </p>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div class="col" th:each="word : ${recommendedWords}">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0" th:text="${word.term}"></h5>
+                        <small class="text-muted" th:text="${word.phonetic} ?: ''"></small>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text" th:text="${word.definition}"></p>
+                    </div>
+                    <div class="card-footer">
+                        <a th:href="@{/learn/flashcards(wordId=${word.id})}">
+                           class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-card-heading me-1"></i> Practice
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
